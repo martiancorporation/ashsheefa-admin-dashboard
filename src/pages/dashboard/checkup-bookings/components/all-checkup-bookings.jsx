@@ -34,6 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useSearchParams } from "react-router-dom";
 import API from "@/api";
 
 import { BookingDetailsModal } from "./booking-details-modal";
@@ -88,6 +89,25 @@ export default function AllCheckupBookings({
 
   // Payment status is superadmin-only; others raise an approval request.
   const needsApproval = useNeedsApproval();
+
+  // `?approval=<record id>` comes from the "request approved/rejected" email:
+  // open that record's request status straight away.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const approvalLink = searchParams.get("approval");
+  useEffect(() => {
+    if (!approvalLink) return;
+    setActiveBooking((current) => (current?._id === approvalLink ? current : { _id: approvalLink }));
+    setRequestStatusOpen(true);
+  }, [approvalLink]);
+
+  const handleRequestStatusOpenChange = (open) => {
+    setRequestStatusOpen(open);
+    if (!open && approvalLink) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("approval");
+      setSearchParams(next, { replace: true });
+    }
+  };
   const { pending: pendingApprovals, refresh: refreshApprovals } = usePendingApprovals(
     "checkup_booking",
     needsApproval ? bookings.map((b) => b._id) : []
@@ -537,7 +557,7 @@ export default function AllCheckupBookings({
       />
       <RequestStatusModal
         open={requestStatusOpen}
-        onOpenChange={setRequestStatusOpen}
+        onOpenChange={handleRequestStatusOpenChange}
         entityType="checkup_booking"
         record={activeBooking}
         recordLabel={activeBooking?.patientId?.patient_full_name}

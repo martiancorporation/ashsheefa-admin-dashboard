@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Check,
   ChevronDown,
@@ -69,6 +70,10 @@ const paymentChange = (request) =>
  * and Permissions, it is not a grantable drawer.
  */
 export default function ApprovalRequestsPage() {
+  // `?request=<id>` comes from the "new approval request" email: show that one.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const focusId = searchParams.get("request");
+
   const [tab, setTab] = useState("pending");
   const [entityType, setEntityType] = useState("all");
   const [searchInput, setSearchInput] = useState("");
@@ -97,32 +102,50 @@ export default function ApprovalRequestsPage() {
   const fetchRequests = useCallback(async () => {
     setLoading(true);
     try {
-      const params = { status: tab, page, limit: LIMIT };
-      if (entityType !== "all") params.entity_type = entityType;
-      if (search) params.search = search;
+      const params = focusId ? { id: focusId } : { status: tab, page, limit: LIMIT };
+      if (!focusId && entityType !== "all") params.entity_type = entityType;
+      if (!focusId && search) params.search = search;
       const res = await API.approvalRequests.GetAllRequests(params);
       if (res && !res.error) {
-        setRequests(res.requests || []);
+        const list = res.requests || [];
+        setRequests(list);
+        // Drop selections for rows that have left this list (e.g. just
+        // approved/rejected), so the bulk bar doesn't linger.
+        setSelected((prev) => {
+          if (prev.size === 0) return prev;
+          const ids = new Set(list.map((r) => r.id));
+          const next = new Set([...prev].filter((id) => ids.has(id)));
+          return next.size === prev.size ? prev : next;
+        });
         setTotalPages(res.pagination?.total_pages || 1);
+        // Land on the tab it now belongs to (it may have been decided since
+        // the email went out), opened.
+        if (focusId && list[0]) {
+          if (["pending", "approved", "rejected"].includes(list[0].status)) setTab(list[0].status);
+          setExpanded(new Set([list[0].id]));
+        }
       }
     } finally {
       setLoading(false);
     }
-  }, [tab, page, entityType, search]);
+  }, [tab, page, entityType, search, focusId]);
 
   useEffect(() => {
     fetchRequests();
   }, [fetchRequests]);
 
+  const showAll = () => setSearchParams({});
+
   useEffect(() => {
     fetchCounts();
   }, [fetchCounts]);
 
-  // A new filter or tab starts from a clean slate.
+  // A new filter or tab starts from a clean slate (the emailed request keeps
+  // its row open).
   useEffect(() => {
     setSelected(new Set());
-    setExpanded(new Set());
-  }, [tab, page, entityType, search]);
+    if (!focusId) setExpanded(new Set());
+  }, [tab, page, entityType, search, focusId]);
 
   const reload = () => {
     fetchRequests();
@@ -131,16 +154,19 @@ export default function ApprovalRequestsPage() {
   };
 
   const changeTab = (key) => {
+    if (focusId) showAll();
     setTab(key);
     setPage(1);
   };
 
   const applySearch = () => {
+    if (focusId) showAll();
     setSearch(searchInput.trim());
     setPage(1);
   };
 
   const clearFilters = () => {
+    if (focusId) showAll();
     setSearchInput("");
     setSearch("");
     setEntityType("all");
@@ -304,6 +330,21 @@ export default function ApprovalRequestsPage() {
               </Button>
             </div>
           </div>
+
+          {focusId && (
+            <div className="flex items-center justify-between gap-3 px-4 py-2 bg-yellow-50 border-b border-yellow-100 text-sm">
+              <span className="text-yellow-900">
+                {requests.length
+                  ? "Showing the request from your email."
+                  : loading
+                    ? "Opening the request from your email…"
+                    : "That request could not be found."}
+              </span>
+              <Button size="sm" variant="outline" className="cursor-pointer" onClick={showAll}>
+                Show all requests
+              </Button>
+            </div>
+          )}
 
           {/* Bulk bar */}
           {isPending && selected.size > 0 && (

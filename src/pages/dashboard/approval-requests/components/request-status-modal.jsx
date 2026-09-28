@@ -90,7 +90,7 @@ export function RequestStatusModal({ open, onOpenChange, entityType, record, rec
             Request Status
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            {recordLabel || "Approval requests raised on this record"}
+            {recordLabel || requests[0]?.entity_label || "Approval requests raised on this record"}
           </DialogDescription>
         </DialogHeader>
 

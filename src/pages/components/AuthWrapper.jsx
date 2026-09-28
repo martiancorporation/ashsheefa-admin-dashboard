@@ -5,7 +5,7 @@ import useAuthDataStore from "@/store/authStore";
 
 export default function AuthWrapper({ children }) {
     const navigate = useNavigate();
-    const { pathname } = useLocation();
+    const { pathname, search } = useLocation();
     const authData = useAuthDataStore((state) => state.authData);
 
     // This is now the only gate on /dashboard: the Next middleware that used to
@@ -21,9 +21,11 @@ export default function AuthWrapper({ children }) {
                 });
             }, 1400);
 
-            navigate('/');
+            // Remember where they were headed (e.g. a link from an approval
+            // email) so login can bring them straight back.
+            navigate(`/?next=${encodeURIComponent(pathname + search)}`);
         }
-    }, [pathname, authData, navigate]);
+    }, [pathname, search, authData, navigate]);
 
     if (pathname.startsWith('/dashboard') && (!authData || !authData.access_token)) {
         return (

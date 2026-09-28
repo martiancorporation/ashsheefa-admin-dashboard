@@ -51,6 +51,7 @@ import { DeleteConfirmationModal } from "./delete-confirmation-modal";
 import { UpdateStatusModal } from "./update-status-modal";
 import { CancelAppointmentModal } from "./cancel-appointment-modal";
 import { toast } from "sonner";
+import { useSearchParams } from "react-router-dom";
 import appointments from "@/api/appointments";
 import {
   isWithinInterval,
@@ -98,6 +99,25 @@ export default function AllAppointments({
 
   // Payment status is superadmin-only; others raise an approval request.
   const needsApproval = useNeedsApproval();
+
+  // `?approval=<record id>` comes from the "request approved/rejected" email:
+  // open that record's request status straight away.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const approvalLink = searchParams.get("approval");
+  useEffect(() => {
+    if (!approvalLink) return;
+    setApprovalAppointment((current) => (current?._id === approvalLink ? current : { _id: approvalLink }));
+    setRequestStatusOpen(true);
+  }, [approvalLink]);
+
+  const handleRequestStatusOpenChange = (open) => {
+    setRequestStatusOpen(open);
+    if (!open && approvalLink) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("approval");
+      setSearchParams(next, { replace: true });
+    }
+  };
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -733,7 +753,7 @@ export default function AllAppointments({
       />
       <RequestStatusModal
         open={requestStatusOpen}
-        onOpenChange={setRequestStatusOpen}
+        onOpenChange={handleRequestStatusOpenChange}
         entityType="appointment"
         record={approvalAppointment}
         recordLabel={approvalAppointment?.patientId?.patient_full_name}
