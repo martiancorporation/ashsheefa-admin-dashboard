@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import LoginForm from "./components/LoginForm";
 import LegalPolicyModal from "./components/LegalPolicyModal";
 import useAuthDataStore from "@/store/authStore";
+import { nextDashboardPath } from "@/lib/utils";
 
 export default function Home() {
   // null = closed, "terms" or "privacy" = which policy modal is open
@@ -17,7 +18,7 @@ export default function Home() {
 
   useEffect(() => {
     if (authData && authData.access_token) {
-      navigate("/dashboard");
+      navigate(nextDashboardPath());
     } else {
       setNoLoginSession(true);
     }

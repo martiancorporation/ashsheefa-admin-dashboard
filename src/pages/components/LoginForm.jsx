@@ -1,3 +1,4 @@
+import { nextDashboardPath } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,7 +55,8 @@ export default function LoginForm() {
                 }
                 if (response) {
                     setAuthData(response);
-                    navigate("/dashboard");
+                    // Back to the page they were sent to (e.g. from an email link).
+                    navigate(nextDashboardPath());
                     toast.success("Login Successfully");
                 }
             })
