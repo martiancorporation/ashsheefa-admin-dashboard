@@ -2,6 +2,7 @@ import axios from "axios";
 import moment from "moment";
 import { toast } from "sonner";
 import { authEndpoints } from "./apis";
+import { loginUrlReturningHere } from "@/lib/utils";
 const { REFRESH_TOKEN } = authEndpoints;
 
 export const axiosInstance = axios.create({});
@@ -90,7 +91,7 @@ export const handleResponse = (response, options = {}) => {
           response?.data?.error || "Session expired. Redirecting to login...",
       });
       localStorage.removeItem("authentications");
-      setTimeout(() => { window.location.href = "/"; }, 2000);
+      setTimeout(() => { window.location.href = loginUrlReturningHere(); }, 2000);
     } else if (response?.status === 500) {
       toast.error("Server error", {
         description: response?.data?.message || "Internal server error",
@@ -122,7 +123,7 @@ export const handleResponse = (response, options = {}) => {
         description: data?.error || "Session expired. Redirecting to login...",
       });
       localStorage.removeItem("authentications");
-      setTimeout(() => { window.location.href = "/"; }, 2000);
+      setTimeout(() => { window.location.href = loginUrlReturningHere(); }, 2000);
     } else if (status === 400) {
       toast.error("Bad request", {
         description: data?.message || "Invalid request data",
