@@ -15,3 +15,16 @@ export function nextDashboardPath() {
   const next = new URLSearchParams(window.location.search).get("next");
   return next && next.startsWith("/dashboard") && !next.startsWith("//") ? next : "/dashboard";
 }
+
+/**
+ * The login page URL that brings the admin back to the current dashboard page
+ * afterwards — used when a session ends mid-visit (e.g. an expired session
+ * while opening an emailed link).
+ */
+export function loginUrlReturningHere() {
+  if (typeof window === "undefined") return "/";
+  const { pathname, search } = window.location;
+  return pathname.startsWith("/dashboard")
+    ? `/?next=${encodeURIComponent(pathname + search)}`
+    : "/";
+}

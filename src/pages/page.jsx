@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LoginForm from "./components/LoginForm";
 import LegalPolicyModal from "./components/LegalPolicyModal";
@@ -15,10 +15,14 @@ export default function Home() {
   const [noLoginSession, setNoLoginSession] = useState(false);
   const authData = useAuthDataStore((state) => state.authData);
   const navigate = useNavigate();
+  // Where to land after login, read once on arrival. Reading it later races
+  // the login form's own navigation — by then the URL no longer has `?next=`
+  // and this would send them to the dashboard home instead of the emailed page.
+  const destination = useRef(nextDashboardPath());
 
   useEffect(() => {
     if (authData && authData.access_token) {
-      navigate(nextDashboardPath());
+      navigate(destination.current, { replace: true });
     } else {
       setNoLoginSession(true);
     }
