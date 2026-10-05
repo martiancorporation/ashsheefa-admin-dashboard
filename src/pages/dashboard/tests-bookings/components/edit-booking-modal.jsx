@@ -27,6 +27,7 @@ import {
   COLLECTION_TYPES,
   CollectionPicker,
   isOfferedSlot,
+  SHOW_TIME_SLOTS,
 } from "../../components/collection-picker";
 
 // Same shape as the appointment edit modal's validation.
@@ -179,7 +180,7 @@ export function EditBookingModal({ open, onOpenChange, booking, onSave }) {
       toast.error("Please pick the collection date");
       return;
     }
-    if (!form.slot_start_time) {
+    if (SHOW_TIME_SLOTS && !form.slot_start_time) {
       toast.error("Please pick the collection time");
       return;
     }
@@ -198,8 +199,12 @@ export function EditBookingModal({ open, onOpenChange, booking, onSave }) {
 
       // Collection
       collection_date: form.collection_date || undefined,
-      slot_start_time: form.slot_start_time || undefined,
-      slot_end_time: deriveEnd(form.slot_start_time),
+      ...(SHOW_TIME_SLOTS
+        ? {
+            slot_start_time: form.slot_start_time || undefined,
+            slot_end_time: deriveEnd(form.slot_start_time),
+          }
+        : {}),
       collection_type: form.collection_type || undefined,
 
       // Money — derived from the rows above, never typed directly
@@ -395,7 +400,6 @@ export function EditBookingModal({ open, onOpenChange, booking, onSave }) {
               currentDate={booking?.collection_date}
               currentTime={booking?.slot_start_time}
               dateRequired
-              timeRequired
             />
 
             <div>

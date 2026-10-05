@@ -28,6 +28,7 @@ import { PAYMENT_MODES } from "./constants";
 import {
   COLLECTION_TYPES,
   CollectionPicker,
+  SHOW_TIME_SLOTS,
 } from "../../components/collection-picker";
 
 const patientSchema = z.object({
@@ -184,7 +185,7 @@ export function AddBookingModal({ open, onOpenChange, onSave }) {
       toast.error("Please pick the collection date");
       return;
     }
-    if (!form.slot_start_time) {
+    if (SHOW_TIME_SLOTS && !form.slot_start_time) {
       toast.error("Please pick the collection time");
       return;
     }
@@ -231,8 +232,12 @@ export function AddBookingModal({ open, onOpenChange, onSave }) {
 
         checkupId: selectedPackageId,
         collection_date: form.collection_date,
-        slot_start_time: form.slot_start_time || undefined,
-        slot_end_time: deriveEnd(form.slot_start_time),
+        ...(SHOW_TIME_SLOTS
+          ? {
+              slot_start_time: form.slot_start_time || undefined,
+              slot_end_time: deriveEnd(form.slot_start_time),
+            }
+          : {}),
         collection_type: form.collection_type,
         paymentMode: form.paymentMode,
         notes: form.notes.trim(),
@@ -505,7 +510,6 @@ export function AddBookingModal({ open, onOpenChange, onSave }) {
               onDateChange={(v) => setField("collection_date", v)}
               onTimeChange={(v) => setField("slot_start_time", v)}
               dateRequired
-              timeRequired
             />
 
             <div className="grid grid-cols-2 gap-4">

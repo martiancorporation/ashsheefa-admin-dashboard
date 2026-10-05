@@ -4,6 +4,7 @@ import {
   flattenAddress,
 } from "@/lib/exportToExcel";
 import { MODE_LABEL, formatTime } from "./constants";
+import { SHOW_TIME_SLOTS } from "../../components/collection-picker";
 
 const DATE_FMT = "dd-mmm-yyyy";
 const DATETIME_FMT = "dd-mmm-yyyy hh:mm AM/PM";
@@ -64,16 +65,20 @@ const TEST_BOOKING_COLUMNS = [
     numFmt: DATE_FMT,
     value: (b) => toExcelDate(b.collection_date),
   },
-  {
-    header: "Slot Start Time",
-    width: 15,
-    value: (b) => formatTime(b.slot_start_time),
-  },
-  {
-    header: "Slot End Time",
-    width: 15,
-    value: (b) => formatTime(b.slot_end_time),
-  },
+  ...(SHOW_TIME_SLOTS
+    ? [
+        {
+          header: "Slot Start Time",
+          width: 15,
+          value: (b) => formatTime(b.slot_start_time),
+        },
+        {
+          header: "Slot End Time",
+          width: 15,
+          value: (b) => formatTime(b.slot_end_time),
+        },
+      ]
+    : []),
   {
     header: "Location",
     width: 16,

@@ -1,20 +1,38 @@
 import { useMemo } from "react";
+import { Clock } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
-export const COLLECTION_SLOTS = [
-  "07:00",
-  "07:30",
-  "08:00",
-  "08:30",
-  "09:00",
-  "09:30",
-  "10:00",
-];
+// Time-slot picker for checkup & test bookings. The client wants date-only
+// booking — patients walk in during the morning window. Flip to true to bring
+// the slot picker back (add/edit/reschedule modals and exports follow this).
+// Keep in sync with SHOW_TIME_SLOTS in the website's src/lib/labCollection.js.
+export const SHOW_TIME_SLOTS = false;
 
-// The site shows today plus the next six days, with today itself not bookable.
+// 30-minute slots from 9:00 AM; the last one starts at 5:30 PM (lab closes 6).
+export const COLLECTION_SLOTS = Array.from({ length: 18 }, (_, i) => {
+  const mins = 9 * 60 + i * 30;
+  return `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
+});
+
+// Walk-in window shown when time slots are hidden — matches the website.
+export const COLLECTION_WINDOW_LABEL = "9:00 AM – 6:00 PM";
+
+// The site shows today plus the next six days.
 export const COLLECTION_DAYS = 7;
 
 export const isOfferedSlot = (time) => COLLECTION_SLOTS.includes(time);
+
+// Same rule as the website: on today, only slots at least 30 minutes away
+// (rounded up to the next slot) are still open. Today stays bookable while
+// any are left — i.e. until about 5:30 PM.
+const slotsLeftToday = () => {
+  const now = new Date();
+  const earliest = now.getHours() * 60 + now.getMinutes() + 30;
+  return COLLECTION_SLOTS.filter((slot) => {
+    const [h, m] = slot.split(":").map(Number);
+    return h * 60 + m >= earliest;
+  });
+};
 
 // Home collection isn't offered yet — kept in the model so bookings that
 // already carry it still read correctly, but not selectable.
@@ -72,6 +90,7 @@ export function CollectionPicker({
 
     const currentStr =
       current && !isNaN(current.getTime()) ? toLocalDateStr(current) : "";
+    const todayClosed = slotsLeftToday().length === 0;
 
     return days.map((d) => {
       const value = toLocalDateStr(d);
@@ -84,10 +103,14 @@ export function CollectionPicker({
         day: d.getDate(),
         month: d.toLocaleString("default", { month: "short" }),
         isPast: d < today,
-        disabled: value === todayStr && value !== currentStr,
+        disabled: value === todayStr && todayClosed && value !== currentStr,
       };
     });
   }, [currentDate]);
+
+  // On today, slots that have already gone by can't be picked.
+  const isToday = date === toLocalDateStr(new Date());
+  const openToday = isToday ? slotsLeftToday() : COLLECTION_SLOTS;
 
   const staleTime = currentTime && !isOfferedSlot(currentTime) ? currentTime : "";
 
@@ -105,7 +128,7 @@ export function CollectionPicker({
               type="button"
               disabled={d.disabled}
               onClick={() => onDateChange(d.value)}
-              className={`px-3 py-2 rounded-xl border text-center leading-tight
+              className={`w-16 py-2 rounded-xl border text-center leading-tight
                 ${
                   date === d.value
                     ? "bg-blue-600 text-white border-blue-600"
@@ -122,6 +145,16 @@ export function CollectionPicker({
         </div>
       </div>
 
+      {!SHOW_TIME_SLOTS ? (
+        <p className="flex items-start gap-2 text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-md px-2.5 py-2">
+          <Clock className="h-3.5 w-3.5 mt-0.5 shrink-0 text-slate-400" />
+          <span>
+            No time slot — the patient visits the hospital between{" "}
+            <span className="font-semibold">{COLLECTION_WINDOW_LABEL}</span> on
+            the selected date.
+          </span>
+        </p>
+      ) : (
       <div>
         <Label className="text-sm font-medium">
           {timeLabel}
@@ -138,19 +171,22 @@ export function CollectionPicker({
             <button
               key={slot}
               type="button"
+              disabled={!openToday.includes(slot) && slot !== currentTime}
               onClick={() => onTimeChange(slot)}
               className={`py-2 rounded-xl text-xs font-semibold border
                 ${
                   time === slot
                     ? "bg-blue-600 text-white border-blue-600"
                     : "bg-white border-slate-200 hover:border-blue-400"
-                }`}
+                }
+                disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-slate-200`}
             >
               {formatSlot(slot)}
             </button>
           ))}
         </div>
       </div>
+      )}
     </>
   );
 }
