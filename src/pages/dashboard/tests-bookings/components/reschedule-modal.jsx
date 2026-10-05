@@ -17,6 +17,7 @@ import { formatDate, formatTime, toLocalDateStr } from "./constants";
 import {
   CollectionPicker,
   isOfferedSlot,
+  SHOW_TIME_SLOTS,
 } from "../../components/collection-picker";
 
 export function RescheduleModal({ open, onOpenChange, booking, onSave }) {
@@ -52,7 +53,7 @@ export function RescheduleModal({ open, onOpenChange, booking, onSave }) {
       toast.error("Please pick the new collection date");
       return;
     }
-    if (!startTime) {
+    if (SHOW_TIME_SLOTS && !startTime) {
       toast.error("Please pick the new collection time");
       return;
     }
@@ -66,8 +67,14 @@ export function RescheduleModal({ open, onOpenChange, booking, onSave }) {
     const currentDate = booking?.collection_date
       ? toLocalDateStr(booking.collection_date)
       : "";
-    if (date === currentDate && startTime === (booking?.slot_start_time || "")) {
-      toast.error("Pick a different date or time to reschedule");
+    const sameTime =
+      !SHOW_TIME_SLOTS || startTime === (booking?.slot_start_time || "");
+    if (date === currentDate && sameTime) {
+      toast.error(
+        SHOW_TIME_SLOTS
+          ? "Pick a different date or time to reschedule"
+          : "Pick a different date to reschedule"
+      );
       return;
     }
 
@@ -75,8 +82,9 @@ export function RescheduleModal({ open, onOpenChange, booking, onSave }) {
     try {
       const res = await API.testBookings.rescheduleBooking(booking._id, {
         collection_date: date,
-        slot_start_time: startTime || undefined,
-        slot_end_time: startTime ? deriveEnd(startTime) : undefined,
+        ...(SHOW_TIME_SLOTS && startTime
+          ? { slot_start_time: startTime, slot_end_time: deriveEnd(startTime) }
+          : {}),
         reason: reason.trim(),
       });
 
@@ -145,7 +153,6 @@ export function RescheduleModal({ open, onOpenChange, booking, onSave }) {
             dateLabel="New Date"
             timeLabel="New Time"
             dateRequired
-            timeRequired
           />
 
           <div className="space-y-1.5">
