@@ -36,7 +36,7 @@ const CreateBlogPost = () => {
     const { name, value } = e.target;
     setFormData((prevState) => ({
       ...prevState,
-      [name]: value,
+      [name]: name === "url" ? value.toLowerCase().replace(/\s+/g, "-").replace(/^\/+/, "") : value,
     }));
   };
 

@@ -9,6 +9,7 @@ import EmergencySosPage from "@/pages/dashboard/emergency-sos/page";
 import InternationalPatientsPage from "@/pages/dashboard/international-patients/page";
 import PatientPage from "@/pages/dashboard/patient/page";
 import PatientDetailsPage from "@/pages/dashboard/patient/[id]/page";
+import AyushmanBharatPage from "@/pages/dashboard/ayushman-bharat/page";
 import DoctorsPage from "@/pages/dashboard/doctors/page";
 import DoctorDetailsPage from "@/pages/dashboard/doctors/[id]/page";
 import HealthCheckupPage from "@/pages/dashboard/health-checkup/page";
@@ -53,6 +54,7 @@ export default function AppRouter() {
 
         <Route path="patient" element={<PatientPage />} />
         <Route path="patient/:id" element={<PatientDetailsPage />} />
+        <Route path="ayushman-bharat" element={<AyushmanBharatPage />} />
 
         <Route path="doctors" element={<DoctorsPage />} />
         <Route path="doctors/:id" element={<DoctorDetailsPage />} />

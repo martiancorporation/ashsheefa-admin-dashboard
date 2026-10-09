@@ -233,3 +233,13 @@ export const EMERGENCY_SOS_API = {
   GET_ALL_SOS: BASE_URL + "/v1/dashboard/sos",
   RESOLVE_SOS: BASE_URL + "/v1/dashboard/sos",
 };
+
+// Ayushman Bharat APIs (Always Authenticated)
+export const AYUSHMAN_BHARAT_API = {
+  GET_ALL: BASE_URL + "/v1/dashboard/ayushman-bharat",
+  GET_STATS: BASE_URL + "/v1/dashboard/ayushman-bharat/stats",
+  GET_BY_ID: BASE_URL + "/v1/dashboard/ayushman-bharat",
+  ADD: BASE_URL + "/v1/dashboard/ayushman-bharat",
+  UPDATE: BASE_URL + "/v1/dashboard/ayushman-bharat",
+  DELETE: BASE_URL + "/v1/dashboard/ayushman-bharat",
+};

@@ -1,7 +1,7 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
-import { LogOut, House, UserSearch, ClipboardCheck, FlaskConical, TestTubeDiagonal, Siren, Plane, User, Stethoscope, Syringe, BriefcaseMedical, FileText, Mic, Settings, KeyRound, ShieldCheck, UserCog, Users, ScrollText, BadgeCheck } from 'lucide-react'
+import { LogOut, House, UserSearch, ClipboardCheck, FlaskConical, TestTubeDiagonal, Siren, Plane, User, Stethoscope, Syringe, BriefcaseMedical, FileText, Mic, Settings, KeyRound, ShieldCheck, UserCog, Users, ScrollText, BadgeCheck, ShieldPlus } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import {
   Tooltip,
@@ -105,6 +105,13 @@ export const menuItems = [
     href: '/dashboard/departments',
     matchPaths: ['/dashboard/departments', '/dashboard/departments/[id]'],
     requiredPermission: 'departments'
+  },
+  {
+    icon: ShieldPlus,
+    label: 'Ayushman Bharat',
+    href: '/dashboard/ayushman-bharat',
+    matchPaths: ['/dashboard/ayushman-bharat'],
+    requiredPermission: 'ayushman-bharat'
   },
   {
     icon: FileText,
