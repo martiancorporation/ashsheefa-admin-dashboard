@@ -15,6 +15,7 @@ import permissions from "./permissions";
 import adminUsers from "./admin-users";
 import activityLogs from "./activity-logs";
 import approvalRequests from "./approval-requests";
+import ayushmanBharat from "./ayushman-bharat";
 
 const API = {
   auth,
@@ -34,6 +35,7 @@ const API = {
   adminUsers,
   activityLogs,
   approvalRequests,
+  ayushmanBharat,
 };
 
 export default API;
