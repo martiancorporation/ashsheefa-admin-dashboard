@@ -34,6 +34,8 @@ import UserManagementPage from "@/pages/dashboard/user-management/page";
 import PermissionRequestsPage from "@/pages/dashboard/permission-requests/page";
 import RequestAccessPage from "@/pages/dashboard/request-access/page";
 import ActivityLogsPage from "@/pages/dashboard/activity-logs/page";
+import AnalyticsPage from "@/pages/dashboard/analytics/page";
+import InsightsPage from "@/pages/dashboard/insights/page";
 import ApprovalRequestsPage from "@/pages/dashboard/approval-requests/page";
 
 export default function AppRouter() {
@@ -94,6 +96,8 @@ export default function AppRouter() {
         <Route path="approval-requests" element={<ApprovalRequestsPage />} />
 
         <Route path="activity-logs" element={<ActivityLogsPage />} />
+        <Route path="analytics" element={<AnalyticsPage />} />
+        <Route path="insights" element={<InsightsPage />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

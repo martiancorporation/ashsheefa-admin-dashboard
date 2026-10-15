@@ -16,6 +16,8 @@ import adminUsers from "./admin-users";
 import activityLogs from "./activity-logs";
 import approvalRequests from "./approval-requests";
 import ayushmanBharat from "./ayushman-bharat";
+import insight from "./insight";
+import web_analytics from "./web-analytics";
 
 const API = {
   auth,
@@ -36,6 +38,8 @@ const API = {
   activityLogs,
   approvalRequests,
   ayushmanBharat,
+  insight,
+  web_analytics,
 };
 
 export default API;

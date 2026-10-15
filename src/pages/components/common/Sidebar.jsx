@@ -1,7 +1,7 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
-import { LogOut, House, UserSearch, ClipboardCheck, FlaskConical, TestTubeDiagonal, Siren, Plane, User, Stethoscope, Syringe, BriefcaseMedical, FileText, Mic, Settings, KeyRound, ShieldCheck, UserCog, Users, ScrollText, BadgeCheck, ShieldPlus } from 'lucide-react'
+import { LogOut, House, UserSearch, ClipboardCheck, FlaskConical, TestTubeDiagonal, Siren, Plane, User, Stethoscope, Syringe, BriefcaseMedical, FileText, Mic, Settings, KeyRound, ShieldCheck, UserCog, Users, ScrollText, BadgeCheck, ShieldPlus, Lightbulb } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import {
   Tooltip,
@@ -28,6 +28,32 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
  */
 export const SHOW_PERMISSIONS_DRAWER = true
 
+/**
+ * Feature flags for the Analytics (Google Analytics + site traffic) and
+ * Insights (patient requests + journeys) drawers. `false` keeps the menu item
+ * visible but disabled with a "Coming soon" tag, and blocks the route.
+ */
+export const SHOW_ANALYTICS = false
+export const SHOW_INSIGHTS = false
+
+// Google "G" mark — lucide ships no brand icons. Monochrome via currentColor so
+// it follows the sidebar's active/inactive text colours like the others.
+const GoogleIcon = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
+    <path d="M21.35 11.1H12.18v2.98h5.26c-.23 1.42-1.66 4.16-5.26 4.16-3.17 0-5.75-2.62-5.75-5.85s2.58-5.85 5.75-5.85c1.8 0 3.01.77 3.7 1.43l2.52-2.43C16.78 4.04 14.7 3.1 12.18 3.1 7.24 3.1 3.25 7.09 3.25 12.03s3.99 8.93 8.93 8.93c5.15 0 8.57-3.62 8.57-8.72 0-.59-.06-1.03-.14-1.47z" />
+  </svg>
+)
+
+/** A sidebar entry's link — or an inert wrapper for a "coming soon" drawer. */
+const MenuLink = ({ item, children }) =>
+  item.comingSoon ? (
+    <div aria-disabled="true" onClick={(e) => e.preventDefault()}>
+      {children}
+    </div>
+  ) : (
+    <Link to={item.href}>{children}</Link>
+  )
+
 export const menuItems = [
   {
     icon: House,
@@ -35,6 +61,22 @@ export const menuItems = [
     href: '/dashboard',
     matchPaths: ['/dashboard'],
     requiredPermission: null
+  },
+  {
+    icon: GoogleIcon,
+    label: 'Analytics',
+    href: '/dashboard/analytics',
+    matchPaths: ['/dashboard/analytics'],
+    requiredPermission: 'analytics',
+    comingSoon: !SHOW_ANALYTICS
+  },
+  {
+    icon: Lightbulb,
+    label: 'Insights',
+    href: '/dashboard/insights',
+    matchPaths: ['/dashboard/insights'],
+    requiredPermission: 'insights',
+    comingSoon: !SHOW_INSIGHTS
   },
   {
     icon: UserSearch,
@@ -355,9 +397,14 @@ export function Sidebar() {
         <ul>
           {visibleMenuItems.map((item) => (
             <li key={item.href}>
-              <Link to={item.href}>
+              {/* A "coming soon" drawer renders without a link: visible, but
+                  inert — no navigation, no hover state, a not-allowed cursor. */}
+              <MenuLink item={item}>
                 <span className={cn(
-                  " relative flex items-center gap-x-2 text-sm py-1 px-2 my-0 text-[#7F7F7F] rounded-[12px] hover:bg-[#FFFFFF] hover:text-[#323232] cursor-pointer transition-all border border-transparent hover:border hover:border-[#E5E5E5]",
+                  " relative flex items-center gap-x-2 text-sm py-1 px-2 my-0 text-[#7F7F7F] rounded-[12px] transition-all border border-transparent",
+                  item.comingSoon
+                    ? "cursor-not-allowed opacity-60"
+                    : "hover:bg-[#FFFFFF] hover:text-[#323232] cursor-pointer hover:border hover:border-[#E5E5E5]",
                   isActiveRoute(item) ? "bg-[#FFFFFF] text-[#323232] border border-[#E5E5E5]" : "",
                   isCollapsed ? "justify-center" : ""
                 )}>
@@ -372,12 +419,18 @@ export function Sidebar() {
                         </span>
                       </TooltipTrigger>
                       <TooltipContent className='bg-white text-[#41A3FF]  border absolute ml-8'>
-                        <p>{item.label}</p>
+                        <p>{item.label}{item.comingSoon ? ' — coming soon' : ''}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
 
                   {!isCollapsed && <span>{item.label}</span>}
+
+                  {item.comingSoon && !isCollapsed && (
+                    <span className="ml-auto shrink-0 whitespace-nowrap rounded-full border border-[#DBECFF] bg-[#EAF3FF] px-1.5 py-[1px] text-[9px] font-semibold uppercase tracking-wide text-[#3B8BF4]">
+                      Coming soon
+                    </span>
+                  )}
 
                   {item.label === 'Approval Requests' && approvalsPending > 0 && (
                     isCollapsed ? (
@@ -404,7 +457,7 @@ export function Sidebar() {
                     )
                   )}
                 </span>
-              </Link>
+              </MenuLink>
             </li>
           ))}
         </ul>
