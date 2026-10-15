@@ -71,5 +71,8 @@ export const canAccessRoute = (user, pathname, menu) => {
 
   if (!item) return true;
 
+  // Shown in the sidebar as "coming soon", but not open yet.
+  if (item.comingSoon) return false;
+
   return canSeeMenuItem(user, item);
 };

@@ -243,3 +243,17 @@ export const AYUSHMAN_BHARAT_API = {
   UPDATE: BASE_URL + "/v1/dashboard/ayushman-bharat",
   DELETE: BASE_URL + "/v1/dashboard/ayushman-bharat",
 };
+
+//**************** * INSIGHT ENDPOINTS ***************
+export const insightEndpoints = {
+  GET_INSIGHTS_API: BASE_URL + "/v1/insight/dashboard",
+  GET_LEADS_API: BASE_URL + "/v1/insight/leads",
+  GET_LEAD_JOURNEY_API: BASE_URL + "/v1/insight/leads", // + /:visitor_id/journey
+};
+
+//**************** * WEB ANALYTICS ENDPOINTS (external source: GA4) ***************
+export const webAnalyticsEndpoints = {
+  WEB_ANALYTICS_STATUS: BASE_URL + "/v1/web-analytics/status",
+  GA4_EXPLORE: BASE_URL + "/v1/web-analytics/ga4/explore",
+  GA4_REALTIME: BASE_URL + "/v1/web-analytics/ga4/realtime",
+};
