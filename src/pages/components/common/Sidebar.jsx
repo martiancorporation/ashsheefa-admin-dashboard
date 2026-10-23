@@ -33,8 +33,8 @@ export const SHOW_PERMISSIONS_DRAWER = true
  * Insights (patient requests + journeys) drawers. `false` keeps the menu item
  * visible but disabled with a "Coming soon" tag, and blocks the route.
  */
-export const SHOW_ANALYTICS = false
-export const SHOW_INSIGHTS = false
+export const SHOW_ANALYTICS = true
+export const SHOW_INSIGHTS = true
 
 // Google "G" mark — lucide ships no brand icons. Monochrome via currentColor so
 // it follows the sidebar's active/inactive text colours like the others.
