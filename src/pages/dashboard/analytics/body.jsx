@@ -8,6 +8,7 @@ import MetricPanel from "@/components/insights/metric-panel";
 import TimeRange from "@/components/insights/time-range";
 import SourceBadge from "@/components/insights/source-badge";
 import InsightDrawer from "@/components/insights/insight-drawer";
+import RecordList from "@/components/insights/record-list";
 import GeoMap from "@/components/insights/geo-map";
 import { BLUE, TINT, SERIES_4, FUNNEL_5 } from "@/components/insights/palette";
 import {
@@ -124,6 +125,59 @@ const ViewAll = ({ onClick }) => (
     View all ›
   </button>
 );
+
+/* Drawer columns: the first is the name, then numeric counts. */
+const countCol = (key, label) => ({
+  key,
+  label,
+  numeric: true,
+  sortable: true,
+  render: (r) => fmt(r[key]),
+});
+const nameCol = (label) => ({ key: "label", label, sortable: true });
+
+const DRAWERS = {
+  departments: {
+    title: "All Departments",
+    noun: "departments",
+    search: "Search departments…",
+    columns: [nameCol("Department"), countCol("views", "Views"), countCol("bookings", "Bookings")],
+    total: (r) => r.bookings,
+    empty: "No bookings for this department yet",
+    note: "Bookings = all appointments and international patients for the department in this range, wherever they were booked. Click a row to see who booked.",
+  },
+  doctors: {
+    title: "All Doctors",
+    noun: "doctors",
+    search: "Search doctors…",
+    columns: [
+      nameCol("Doctor"),
+      countCol("views", "Views"),
+      countCol("appointments", "Appointments"),
+      countCol("international", "International"),
+    ],
+    total: (r) => (r.appointments || 0) + (r.international || 0),
+    empty: "No appointments or international patients for this doctor yet",
+    note: "Appointments and international patients booked with each doctor in this range. Click a row to see the patients.",
+  },
+  packages: {
+    title: "All Health Packages",
+    noun: "packages",
+    search: "Search packages…",
+    columns: [nameCol("Package"), countCol("views", "Views"), countCol("bookings", "Bookings")],
+    total: (r) => r.bookings,
+    empty: "No bookings for this package yet",
+    note: "Bookings of each health package in this range. Views count opens of its booking form on the website. Click a row to see who booked.",
+  },
+  blogs: {
+    title: "All Blogs",
+    noun: "posts",
+    search: "Search blogs…",
+    columns: [nameCol("Blog"), countCol("views", "Views"), countCol("visitors", "Visitors")],
+    // Reading is not a booking: no people to list, so rows don't expand.
+    expandable: false,
+  },
+};
 
 const SectionHeading = ({ title, source, note }) => (
   <div className="flex items-center justify-between gap-3 pt-1">
@@ -332,7 +386,7 @@ export default function Body({
 
             {/* ---------------- leads ---------------- */}
             <SectionHeading
-              title="Patient requests"
+              title="Bookings & enquiries"
               source="crm"
               note={`${fmt(audience.attributed_leads)} traced to a visit`}
             />
@@ -369,7 +423,7 @@ export default function Body({
                       metrics={[
                         {
                           key: "total",
-                          label: "Total requests",
+                          label: "Total bookings & enquiries",
                           value: fmt(lStats.total_requests?.total),
                           rate: lStats.total_requests?.rate,
                           levelUp: lStats.total_requests?.levelUp,
@@ -437,8 +491,8 @@ export default function Body({
                     />
                   </div>
                   <DonutChart
-                    title="Request Mix"
-                    centerLabel="Requests"
+                    title="Bookings & Enquiries Mix"
+                    centerLabel="Total"
                     data={[
                       { name: "Appointments", value: leadType.appointment || 0, color: BLUE[900] },
                       { name: "Health checkups", value: leadType.checkup || 0, color: BLUE[700] },
@@ -448,11 +502,11 @@ export default function Body({
                     ]}
                   />
                   <Funnel
-                    title="Visit → Interest → Request"
+                    title="Visit → Interest → Booking"
                     stages={[
                       { label: "Visitors", value: funnel.visitors, color: FUNNEL_5[0] },
                       { label: "Viewed a department / doctor / package", value: funnel.engaged, color: FUNNEL_5[1] },
-                      { label: "Patient requests", value: funnel.requests, color: FUNNEL_5[3] },
+                      { label: "Booked or enquired", value: funnel.requests, color: FUNNEL_5[3] },
                       { label: "Paid bookings", value: funnel.paid, color: FUNNEL_5[4] },
                     ]}
                     note="First two stages count distinct visitors; the last two count submitted records, so one person can appear more than once. Read the shape, not a per-person survival rate."
@@ -462,9 +516,14 @@ export default function Body({
             </div>
 
             {/* ---------------- content interest ---------------- */}
-            <SectionHeading title="Content interest" source="tracker" />
+            <SectionHeading
+              title="Visitor interest"
+              source="tracker"
+              note="what visitors looked at, and what it led to"
+            />
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {/* min-h = a full six-row card, so short lists don't shrink the row. */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 [&>*]:min-h-[342px]">
               {pending ? (
                 <>
                   <ListCardSkeleton rows={6} action />
@@ -477,50 +536,32 @@ export default function Body({
                   <RankedBars
                     title="Top Departments"
                     labelHeader="Department"
-                    valueHeader="Views"
+                    valueHeader="Bookings"
                     accent={BLUE[800]}
-                    valueKey="views"
-                    metaKey="visitors"
-                    metaLabel="visitors"
-                    action={departments.length > 6 ? <ViewAll onClick={() => openDrawer("departments")} /> : null}
-                    items={departments.slice(0, 6).map((c) => ({
-                      label: c.label,
-                      views: c.views,
-                      visitors: c.visitors,
-                    }))}
-                    emptyText="No department views yet"
+                    valueKey="bookings"
+                    action={departments.length ? <ViewAll onClick={() => openDrawer("departments")} /> : null}
+                    items={departments.slice(0, 6).map((c) => ({ label: c.label, bookings: c.bookings }))}
+                    emptyText="No department bookings yet"
                   />
                   <RankedBars
                     title="Top Doctors"
                     labelHeader="Doctor"
-                    valueHeader="Views"
+                    valueHeader="Appointments"
                     accent={BLUE[600]}
-                    valueKey="views"
-                    metaKey="visitors"
-                    metaLabel="visitors"
-                    action={doctors.length > 6 ? <ViewAll onClick={() => openDrawer("doctors")} /> : null}
-                    items={doctors.slice(0, 6).map((c) => ({
-                      label: c.label,
-                      views: c.views,
-                      visitors: c.visitors,
-                    }))}
-                    emptyText="No doctor views yet"
+                    valueKey="appointments"
+                    action={doctors.length ? <ViewAll onClick={() => openDrawer("doctors")} /> : null}
+                    items={doctors.slice(0, 6).map((c) => ({ label: c.label, appointments: c.appointments }))}
+                    emptyText="No appointments yet"
                   />
                   <RankedBars
                     title="Top Health Packages"
                     labelHeader="Package"
-                    valueHeader="Views"
+                    valueHeader="Bookings"
                     accent={BLUE[400]}
-                    valueKey="views"
-                    metaKey="visitors"
-                    metaLabel="visitors"
-                    action={packages.length > 6 ? <ViewAll onClick={() => openDrawer("packages")} /> : null}
-                    items={packages.slice(0, 6).map((c) => ({
-                      label: c.label,
-                      views: c.views,
-                      visitors: c.visitors,
-                    }))}
-                    emptyText="No package views yet"
+                    valueKey="bookings"
+                    action={packages.length ? <ViewAll onClick={() => openDrawer("packages")} /> : null}
+                    items={packages.slice(0, 6).map((c) => ({ label: c.label, bookings: c.bookings }))}
+                    emptyText="No package bookings yet"
                   />
                   <RankedBars
                     title="Top Blogs"
@@ -528,14 +569,8 @@ export default function Body({
                     valueHeader="Views"
                     accent={BLUE[300]}
                     valueKey="views"
-                    metaKey="visitors"
-                    metaLabel="visitors"
-                    action={blogs.length > 6 ? <ViewAll onClick={() => openDrawer("blogs")} /> : null}
-                    items={blogs.slice(0, 6).map((c) => ({
-                      label: c.label,
-                      views: c.views,
-                      visitors: c.visitors,
-                    }))}
+                    action={blogs.length ? <ViewAll onClick={() => openDrawer("blogs")} /> : null}
+                    items={blogs.slice(0, 6).map((c) => ({ label: c.label, views: c.views }))}
                     emptyText="No blog views yet"
                   />
                 </>
@@ -545,62 +580,34 @@ export default function Body({
         </div>
 
         {/* ---------------- drawers ---------------- */}
-        <InsightDrawer
-          open={drawer === "departments"}
-          onClose={closeDrawer}
-          title="All Department Interest"
-          subtitle={`${departments.length} departments · sortable`}
-          rows={departments}
-          searchKey="label"
-          searchPlaceholder="Search departments…"
-          columns={[
-            { key: "label", label: "Department" },
-            { key: "views", label: "Views", numeric: true, sortable: true, render: (r) => fmt(r.views) },
-            { key: "visitors", label: "Visitors", numeric: true, sortable: true, render: (r) => fmt(r.visitors) },
-          ]}
-        />
-        <InsightDrawer
-          open={drawer === "doctors"}
-          onClose={closeDrawer}
-          title="All Doctor Interest"
-          subtitle={`${doctors.length} doctors · sortable`}
-          rows={doctors}
-          searchKey="label"
-          searchPlaceholder="Search doctors…"
-          columns={[
-            { key: "label", label: "Doctor" },
-            { key: "views", label: "Views", numeric: true, sortable: true, render: (r) => fmt(r.views) },
-            { key: "visitors", label: "Visitors", numeric: true, sortable: true, render: (r) => fmt(r.visitors) },
-          ]}
-        />
-        <InsightDrawer
-          open={drawer === "packages"}
-          onClose={closeDrawer}
-          title="All Package Interest"
-          subtitle={`${packages.length} packages · sortable`}
-          rows={packages}
-          searchKey="label"
-          searchPlaceholder="Search packages…"
-          columns={[
-            { key: "label", label: "Package" },
-            { key: "views", label: "Views", numeric: true, sortable: true, render: (r) => fmt(r.views) },
-            { key: "visitors", label: "Visitors", numeric: true, sortable: true, render: (r) => fmt(r.visitors) },
-          ]}
-        />
-        <InsightDrawer
-          open={drawer === "blogs"}
-          onClose={closeDrawer}
-          title="All Blog Interest"
-          subtitle={`${blogs.length} posts · sortable`}
-          rows={blogs}
-          searchKey="label"
-          searchPlaceholder="Search blogs…"
-          columns={[
-            { key: "label", label: "Blog" },
-            { key: "views", label: "Views", numeric: true, sortable: true, render: (r) => fmt(r.views) },
-            { key: "visitors", label: "Visitors", numeric: true, sortable: true, render: (r) => fmt(r.visitors) },
-          ]}
-        />
+        {[
+          ["departments", departments],
+          ["doctors", doctors],
+          ["packages", packages],
+          ["blogs", blogs],
+        ].map(([key, rows]) => {
+          const d = DRAWERS[key];
+          return (
+            <InsightDrawer
+              key={key}
+              open={drawer === key}
+              onClose={closeDrawer}
+              title={d.title}
+              subtitle={`${rows.length} ${d.noun} · sortable`}
+              rows={rows}
+              searchKey="label"
+              searchPlaceholder={d.search}
+              rowKey="slug"
+              note={d.note}
+              renderExpanded={
+                d.expandable === false
+                  ? undefined
+                  : (r) => <RecordList records={r.records} total={d.total(r)} emptyText={d.empty} />
+              }
+              columns={d.columns}
+            />
+          );
+        })}
       </div>
     </>
   );

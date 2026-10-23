@@ -55,25 +55,15 @@ export function VisitorAreaChart({ allDashboardData }) {
     const yearly = allDashboardData?.yearly || {}
     const availableYears = React.useMemo(() => {
         const years = []
-        for (let y = 2025; y <= 2045; y++) {
+        // Until 2045, then grows by one each new year so the current year is always listed
+        const lastYear = Math.max(2045, new Date().getFullYear())
+        for (let y = 2025; y <= lastYear; y++) {
             years.push(y.toString())
         }
         return years.reverse()
     }, [])
 
-    const [selectedYear, setSelectedYear] = React.useState("")
-
-    // Initialize selected year when availableYears are populated
-    React.useEffect(() => {
-        if (availableYears.length > 0 && !selectedYear) {
-            const currentYearStr = new Date().getFullYear().toString()
-            if (availableYears.includes(currentYearStr)) {
-                setSelectedYear(currentYearStr)
-            } else {
-                setSelectedYear(availableYears[0])
-            }
-        }
-    }, [availableYears, selectedYear])
+    const [selectedYear, setSelectedYear] = React.useState(() => new Date().getFullYear().toString())
 
     // Transform API data to match the expected format
     const chartData = React.useMemo(() => {

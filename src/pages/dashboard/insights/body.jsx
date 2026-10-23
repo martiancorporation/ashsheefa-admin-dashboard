@@ -6,6 +6,7 @@ import TimeRange from "@/components/insights/time-range";
 import SourceBadge from "@/components/insights/source-badge";
 import InsightDrawer from "@/components/insights/insight-drawer";
 import LeadDrawer from "@/components/insights/lead-drawer";
+import RecordList from "@/components/insights/record-list";
 import { BLUE, TINT } from "@/components/insights/palette";
 import {
   StatCardSkeleton,
@@ -76,6 +77,14 @@ export default function Body({
   const appointmentStatus = quality.appointmentStatus || [];
   const byPackage = quality.byPackage || [];
   const byCountry = quality.byCountry || [];
+  // Patient enquiries carry no country, so they rank as one row beside the
+  // international ones (which are split by country).
+  const enquiries = [
+    { label: "Patient enquiry", leads: leads.leadType?.enquiry || 0 },
+    ...byCountry.map((c) => ({ label: `International · ${c.label}`, leads: c.leads })),
+  ]
+    .filter((r) => r.leads > 0)
+    .sort((a, b) => b.leads - a.leads);
   const collection = quality.collection || [];
 
   const pending = loading && !data;
@@ -217,7 +226,7 @@ export default function Body({
 
             {/* ---------------- lead intelligence ---------------- */}
             <SectionHeading
-              title="Patient requests"
+              title="Bookings & enquiries"
               source="crm"
               note="already collected by the booking forms"
             />
@@ -230,7 +239,7 @@ export default function Body({
                   <RankedBars
                     title="Appointments by Speciality"
                     labelHeader="Speciality"
-                    valueHeader="Requests"
+                    valueHeader="Appointments"
                     accent={BLUE[800]}
                     valueKey="leads"
                     action={bySpeciality.length > 6 ? <ViewAll onClick={() => openDrawer("specialities")} /> : null}
@@ -238,9 +247,9 @@ export default function Body({
                     emptyText="No appointments yet"
                   />
                   <RankedBars
-                    title="Most Requested Doctors"
+                    title="Top Doctors"
                     labelHeader="Doctor"
-                    valueHeader="Requests"
+                    valueHeader="Appointments"
                     accent={BLUE[500]}
                     valueKey="leads"
                     action={byDoctor.length > 6 ? <ViewAll onClick={() => openDrawer("doctors")} /> : null}
@@ -251,7 +260,7 @@ export default function Body({
                     title="Appointment Status"
                     subtitle="Every stage, including empty ones"
                     labelHeader="Stage"
-                    valueHeader="Requests"
+                    valueHeader="Appointments"
                     accent={BLUE[900]}
                     valueKey="leads"
                     items={appointmentStatus}
@@ -260,7 +269,7 @@ export default function Body({
                   <RankedBars
                     title="Health Packages Booked"
                     labelHeader="Package"
-                    valueHeader="Requests"
+                    valueHeader="Bookings"
                     accent={BLUE[300]}
                     valueKey="leads"
                     items={byPackage.slice(0, 6)}
@@ -280,20 +289,20 @@ export default function Body({
               ) : (
                 <>
                   <RankedBars
-                    title="International Patients"
-                    subtitle="By country"
-                    labelHeader="Country"
-                    valueHeader="Requests"
+                    title="Enquiries"
+                    subtitle="Patient & international"
+                    labelHeader="Type"
+                    valueHeader="Enquiries"
                     accent={BLUE[500]}
                     valueKey="leads"
-                    items={byCountry.slice(0, 6)}
-                    emptyText="No international requests yet"
+                    items={enquiries.slice(0, 6)}
+                    emptyText="No enquiries yet"
                   />
                   <RankedBars
                     title="Sample Collection"
                     subtitle="Checkups and tests"
                     labelHeader="Where"
-                    valueHeader="Requests"
+                    valueHeader="Bookings"
                     accent={BLUE[300]}
                     valueKey="leads"
                     items={collection}
@@ -317,7 +326,7 @@ export default function Body({
                     <p className="mt-3 text-[26px] font-bold leading-none text-[#121212]">
                       {fmt(audience.attributed_leads)}
                       <span className="ml-2 text-[13px] font-normal text-[#9A9A9A]">
-                        traceable requests
+                        traceable bookings & enquiries
                       </span>
                     </p>
                     <p className="mt-3 text-[12px] leading-5 text-[#9A9A9A]">
@@ -344,10 +353,29 @@ export default function Body({
           rows={topPages}
           searchKey="path"
           searchPlaceholder="Search paths…"
+          rowKey="path"
+          width={700}
+          renderExpanded={(r) => (
+            <RecordList records={r.records} total={r.requests} emptyText="No bookings or enquiries from this page's visitors" />
+          )}
+          note="Response rate = bookings & enquiries made by this page's visitors ÷ its views in the range. Click a row to see who responded."
           columns={[
             { key: "path", label: "Path" },
             { key: "views", label: "Views", numeric: true, sortable: true, render: (r) => fmt(r.views) },
             { key: "visitors", label: "Visitors", numeric: true, sortable: true, render: (r) => fmt(r.visitors) },
+            { key: "requests", label: "Responses", numeric: true, sortable: true, render: (r) => fmt(r.requests) },
+            {
+              key: "conversion",
+              label: "Response rate",
+              numeric: true,
+              sortable: true,
+              render: (r) =>
+                r.conversion === null || r.conversion === undefined ? (
+                  "—"
+                ) : (
+                  <span className="font-semibold text-[#006ACA]">{r.conversion}%</span>
+                ),
+            },
           ]}
         />
         <InsightDrawer
@@ -366,7 +394,7 @@ export default function Body({
         <InsightDrawer
           open={drawer === "doctors"}
           onClose={closeDrawer}
-          title="All Requested Doctors"
+          title="All Booked Doctors"
           subtitle={`${byDoctor.length} doctors · sortable`}
           rows={byDoctor}
           searchKey="label"

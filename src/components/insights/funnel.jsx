@@ -1,3 +1,26 @@
+import { useRef, useState } from "react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+/** One-line label that shows its full text instantly on hover — only when it is actually cut off. */
+function TruncatedLabel({ text, className = "" }) {
+  const ref = useRef(null);
+  const [open, setOpen] = useState(false);
+  const isCut = () => ref.current && ref.current.scrollWidth > ref.current.clientWidth;
+
+  return (
+    <TooltipProvider delayDuration={0}>
+      <Tooltip open={open} onOpenChange={(next) => setOpen(next && isCut())}>
+        <TooltipTrigger asChild>
+          <span ref={ref} className={`truncate ${className}`}>
+            {text}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>{text}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 /**
  * Stage-by-stage drop-off. Each bar is a share of the FIRST stage, and each
  * row also states its conversion from the stage directly above it — the
@@ -21,7 +44,7 @@ export default function Funnel({ title, stages = [], note }) {
           return (
             <li key={stage.label}>
               <div className="flex items-center justify-between gap-2 text-[13px]">
-                <span className="truncate text-[#121212]">{stage.label}</span>
+                <TruncatedLabel text={stage.label} className="text-[#121212]" />
                 <span className="shrink-0 font-semibold text-[#121212]">
                   {value.toLocaleString("en-IN")}
                   {stepRate !== null ? (
