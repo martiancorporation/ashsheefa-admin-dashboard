@@ -55,7 +55,9 @@ export function VisitorAreaChart({ allDashboardData }) {
     const yearly = allDashboardData?.yearly || {}
     const availableYears = React.useMemo(() => {
         const years = []
-        for (let y = 2025; y <= 2045; y++) {
+        // Until 2045, then grows by one each new year so the current year is always listed
+        const lastYear = Math.max(2045, new Date().getFullYear())
+        for (let y = 2025; y <= lastYear; y++) {
             years.push(y.toString())
         }
         return years.reverse()
