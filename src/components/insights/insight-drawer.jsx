@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Search, X } from "lucide-react";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import { ChevronRight, Search, X } from "lucide-react";
 
 /**
  * Slide-over panel holding the full version of a ranked list, with search and
@@ -20,15 +20,22 @@ export default function InsightDrawer({
   searchKey,
   searchPlaceholder = "Search…",
   note,
+  // Sabar's expandable rows: clicking one opens the records behind it in place
+  // (one row open at a time), keyed by `rowKey`.
+  renderExpanded,
+  rowKey = "label",
+  width = 520,
 }) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState({ key: null, dir: "desc" });
+  const [expanded, setExpanded] = useState(null);
 
   // Reset per-open, so reopening a drawer never inherits the last search.
   useEffect(() => {
     if (open) {
       setQuery("");
       setSort({ key: null, dir: "desc" });
+      setExpanded(null);
     }
   }, [open]);
 
@@ -59,6 +66,10 @@ export default function InsightDrawer({
       out = [...out].sort((a, b) => {
         const av = a?.[sort.key];
         const bv = b?.[sort.key];
+        // Blanks ("—", no value) stay at the bottom in either direction.
+        const aBlank = av === null || av === undefined;
+        const bBlank = bv === null || bv === undefined;
+        if (aBlank || bBlank) return aBlank === bBlank ? 0 : aBlank ? 1 : -1;
         const diff =
           typeof av === "number" && typeof bv === "number"
             ? av - bv
@@ -84,7 +95,7 @@ export default function InsightDrawer({
         role="presentation"
       />
 
-      <aside className="relative flex h-full w-full max-w-[520px] flex-col bg-white shadow-2xl">
+      <aside className="relative flex h-full w-full flex-col bg-white shadow-2xl" style={{ maxWidth: width }}>
         <header className="flex items-start justify-between gap-3 border-b border-[#EEEEEE] px-5 py-4">
           <div className="min-w-0">
             <h5 className="truncate text-[15px] font-bold text-[#121212]">{title}</h5>
@@ -124,7 +135,7 @@ export default function InsightDrawer({
                   <th
                     key={col.key}
                     className={`px-5 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-[#9A9A9A] ${
-                      col.numeric ? "text-right" : "text-left"
+                      col.numeric ? "whitespace-nowrap text-right" : "text-left"
                     }`}
                   >
                     {col.sortable ? (
@@ -156,20 +167,54 @@ export default function InsightDrawer({
                   </td>
                 </tr>
               ) : (
-                visible.map((row, i) => (
-                  <tr key={i} className="border-b border-[#F5F5F5] hover:bg-[#FBFBFB]">
-                    {columns.map((col) => (
-                      <td
-                        key={col.key}
-                        className={`px-5 py-2.5 text-[13px] text-[#121212] ${
-                          col.numeric ? "text-right tabular-nums" : "text-left"
-                        }`}
+                visible.map((row, i) => {
+                  const key = String(row?.[rowKey] ?? i);
+                  const isOpen = Boolean(renderExpanded) && expanded === key;
+                  const cell = (col) =>
+                    col.render ? col.render(row, i) : String(row?.[col.key] ?? "—");
+                  return (
+                    <Fragment key={key}>
+                      <tr
+                        onClick={renderExpanded ? () => setExpanded(isOpen ? null : key) : undefined}
+                        aria-expanded={renderExpanded ? isOpen : undefined}
+                        className={`border-b border-[#F5F5F5] hover:bg-[#FBFBFB] ${
+                          renderExpanded ? "cursor-pointer" : ""
+                        } ${isOpen ? "bg-[#F4F8FD]" : ""}`}
                       >
-                        {col.render ? col.render(row, i) : String(row?.[col.key] ?? "—")}
-                      </td>
-                    ))}
-                  </tr>
-                ))
+                        {columns.map((col, c) => (
+                          <td
+                            key={col.key}
+                            className={`px-5 py-2.5 text-[13px] text-[#121212] ${
+                              col.numeric
+                                ? "whitespace-nowrap text-right tabular-nums"
+                                : "text-left [overflow-wrap:anywhere]"
+                            }`}
+                          >
+                            {renderExpanded && c === 0 ? (
+                              <span className="flex items-center gap-1.5">
+                                <ChevronRight
+                                  className={`h-3.5 w-3.5 shrink-0 text-[#9A9A9A] transition-transform ${
+                                    isOpen ? "rotate-90 text-[#006ACA]" : ""
+                                  }`}
+                                />
+                                <span className="min-w-0">{cell(col)}</span>
+                              </span>
+                            ) : (
+                              cell(col)
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                      {isOpen ? (
+                        <tr className="border-b border-[#F5F5F5] bg-[#F4F8FD]">
+                          <td colSpan={columns.length} className="px-5 pb-3 pt-0">
+                            {renderExpanded(row)}
+                          </td>
+                        </tr>
+                      ) : null}
+                    </Fragment>
+                  );
+                })
               )}
             </tbody>
           </table>

@@ -468,7 +468,7 @@ export function Sidebar() {
       <div className='shrink-0 px-4 pt-2'>
 
         <AlertDialog className='w-full '>
-          <AlertDialogTrigger className='w-full'>
+          <AlertDialogTrigger asChild>
             <Button
               className={cn(
                 "w-full flex items-center justify-start gap-x-2 bg-transparent border border-transparent shadow-none rounded-[12px] text-[#7F7F7F] hover:bg-gray-100 cursor-pointer",

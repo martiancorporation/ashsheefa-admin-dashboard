@@ -28,7 +28,7 @@ const EVENT_STYLE = {
   doctor_view: { icon: Stethoscope, label: "Viewed doctor", color: BLUE[800] },
   department_view: { icon: Building2, label: "Viewed department", color: BLUE[700] },
   package_view: { icon: ClipboardCheck, label: "Opened health package", color: BLUE[500] },
-  request_submitted: { icon: Send, label: "Submitted request", color: BLUE[900] },
+  request_submitted: { icon: Send, label: "Booked / enquired", color: BLUE[900] },
   blog_view: { icon: FileText, label: "Read blog", color: BLUE[300] },
   // Ambient page views are the noise in a journey, so they sit back in grey.
   page_view: { icon: Globe, label: "Opened page", color: NEUTRAL.muted },
@@ -152,7 +152,7 @@ export default function LeadDrawer({ open, onClose, token }) {
               <button
                 type="button"
                 onClick={() => setSelected(null)}
-                aria-label="Back to requests"
+                aria-label="Back to the list"
                 className="mt-0.5 shrink-0 rounded-[8px] p-1 text-[#636363] hover:bg-[#F2F2F2]"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -166,7 +166,7 @@ export default function LeadDrawer({ open, onClose, token }) {
                 {selected
                   ? `${KIND_STYLE[selected.kind]?.label} · ${fmtDate(selected.createdAt)}`
                   : meta
-                    ? `${meta.totalRequests} requests traceable to a tracked visit`
+                    ? `${meta.totalRequests} bookings & enquiries traceable to a tracked visit`
                     : "Loading…"}
               </p>
             </div>
@@ -222,11 +222,11 @@ export default function LeadDrawer({ open, onClose, token }) {
             <div className="flex-1 overflow-y-auto">
               {loading && rows.length === 0 ? (
                 <div className="flex items-center justify-center gap-2 py-12 text-[12px] text-[#9A9A9A]">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading requests…
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading…
                 </div>
               ) : rows.length === 0 ? (
                 <p className="px-5 py-12 text-center text-[12px] leading-5 text-[#9A9A9A]">
-                  No traceable requests yet.
+                  No traceable bookings or enquiries yet.
                   <br />
                   Only submissions made after the tracker went live can be linked
                   to a browsing session.
@@ -318,7 +318,7 @@ function JourneyView({ lead, journey, loading }) {
       <dl className="grid grid-cols-2 gap-x-4 gap-y-2 border-b border-[#EEEEEE] px-5 py-4 text-[12px]">
         {[
           ["Phone", lead.phone],
-          ["Request", lead.detail],
+          ["Booked for", lead.detail],
           ["Status", lead.status],
         ]
           .filter(([, v]) => v)
